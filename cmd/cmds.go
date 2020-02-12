@@ -21,7 +21,7 @@ func CreateCommand() *cobra.Command {
 				}
 			}
 
-			return startGenerator(args)
+			return startGenerator(args, false)
 		},
 	}
 }
@@ -53,7 +53,7 @@ func UpdateCommand() (cmd *cobra.Command) {
 				})
 			}
 
-			return startGenerator(aliasFileDirs)
+			return startGenerator(aliasFileDirs, true)
 		},
 	}
 

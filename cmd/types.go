@@ -6,3 +6,8 @@ type packageDeclarations struct {
 	variables []string
 	types     []string
 }
+
+const (
+	NoAliasEsc   = "noalias"
+	AliasKeyword = "ALIASGEN:"
+)

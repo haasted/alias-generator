@@ -12,7 +12,7 @@ import (
 	"unicode"
 )
 
-func startGenerator(dirs []string) error {
+func startGenerator(dirs []string, update bool) error {
 	for _, dir := range dirs {
 		fullPackage, err := determineFullPackage(dir)
 		if err != nil {
@@ -24,6 +24,20 @@ func startGenerator(dirs []string) error {
 
 		// Do not alias the root package
 		delete(typesMap, fullPackage)
+
+		if update {
+			aliaspackages, err := parseAliasGenAnnotations(dir)
+			if err != nil {
+				return err
+			}
+
+			// Create a new typesmap containing only the packages explicitly mentioned in alias.go
+			newTypesMap := make(map[string]packageDeclarations)
+			for _, pack := range aliaspackages {
+				newTypesMap[pack] = typesMap[pack]
+			}
+			typesMap = newTypesMap
+		}
 
 		bz := generateAliasFile(dir, typesMap)
 		ioutil.WriteFile(filepath.Join(dir, "alias.go"), bz, os.ModePerm)
