@@ -7,6 +7,11 @@ import (
 	"go/token"
 	"io/ioutil"
 	"path"
+	"strings"
+)
+
+const (
+	NoAliasEsc = "noalias"
 )
 
 func scanSubdirectories(physDir, absolutePackage string, types map[string]packageDeclarations) error {
@@ -17,23 +22,45 @@ func scanSubdirectories(physDir, absolutePackage string, types map[string]packag
 
 	declarations := packageDeclarations{}
 	expr, err := parser.ParseDir(token.NewFileSet(), physDir, filterGoFiles, parser.ParseComments)
+
+stopscan:
 	for _, e := range expr {
 		for _, f := range e.Files {
+			// The entire package can be noaliased by annotating the package declaration
+			if markedExempt(f.Doc) {
+				declarations = packageDeclarations{}
+				break stopscan
+			}
+
 			for _, d := range f.Decls {
 				switch decl := d.(type) {
+
+				// Capture function declarations
+				case *ast.FuncDecl:
+					if decl.Recv == nil { // Function, not receiver
+						if startsWithUppercase(decl.Name.Name) && !markedExempt(decl.Doc) {
+							declarations.functions = append(declarations.functions, decl.Name.Name)
+						}
+					}
+
+				// Capture var, const and type declarations
 				case *ast.GenDecl:
 					for _, s := range decl.Specs {
 						switch spec := s.(type) {
-						case *ast.ImportSpec:
+
+						case *ast.TypeSpec:
+							if startsWithUppercase(spec.Name.Name) && !markedExempt(spec.Comment, spec.Doc, decl.Doc) {
+								declarations.types = append(declarations.types, spec.Name.Name)
+							}
 
 						case *ast.ValueSpec:
 							names := make([]string, 0)
 							for _, name := range spec.Names {
-								if name.Name == "_" {
+								if !startsWithUppercase(name.Name) {
 									continue
 								}
 
-								if !startsWithUppercase(name.Name) {
+								if markedExempt(spec.Comment, spec.Doc, decl.Doc) {
 									continue
 								}
 
@@ -45,29 +72,10 @@ func scanSubdirectories(physDir, absolutePackage string, types map[string]packag
 								declarations.consts = append(declarations.consts, names...)
 							case token.VAR:
 								declarations.variables = append(declarations.variables, names...)
-							default:
-								fmt.Println("Unhandled declaration token: ", decl.Tok)
 							}
-
-						case *ast.TypeSpec:
-							if startsWithUppercase(spec.Name.Name) {
-								declarations.types = append(declarations.types, spec.Name.Name)
-							}
-
-						default:
-							fmt.Printf("Unhandled spec type : %T\n", spec)
 						}
 					}
 
-				case *ast.FuncDecl:
-					if decl.Recv == nil {
-						if startsWithUppercase(decl.Name.Name) {
-							declarations.functions = append(declarations.functions, decl.Name.Name)
-						}
-					}
-
-				default:
-					fmt.Printf("Unhandled decl type : %T\n", d)
 				}
 			}
 		}
@@ -89,4 +97,18 @@ func scanSubdirectories(physDir, absolutePackage string, types map[string]packag
 	}
 
 	return nil
+}
+
+func markedExempt(cgs ...*ast.CommentGroup) bool {
+	for _, cg := range cgs {
+		if cg == nil {
+			continue
+		}
+
+		if strings.Contains(cg.Text(), NoAliasEsc) {
+			return true
+		}
+	}
+
+	return false
 }

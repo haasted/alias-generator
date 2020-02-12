@@ -31,12 +31,12 @@ var CreateAlias = &cobra.Command{
 
 func create(dirs []string) error {
 	for _, dir := range dirs {
-		typesMap := make(map[string]packageDeclarations)
 		fullPackage, err := determineFullPackage(dir)
 		if err != nil {
 			return err
 		}
 
+		typesMap := make(map[string]packageDeclarations)
 		scanSubdirectories(dir, fullPackage, typesMap)
 
 		// Do not alias the root package
