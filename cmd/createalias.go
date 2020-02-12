@@ -3,7 +3,6 @@ package cmd
 import (
 	"errors"
 	"fmt"
-	"github.com/spf13/cobra"
 	"golang.org/x/mod/modfile"
 	"io/ioutil"
 	"os"
@@ -13,23 +12,7 @@ import (
 	"unicode"
 )
 
-var CreateAlias = &cobra.Command{
-	Use:  "create",
-	Args: cobra.MinimumNArgs(1),
-	RunE: func(cmd *cobra.Command, args []string) error {
-		// Verify input
-		for _, dir := range args {
-			_, err := ioutil.ReadDir(dir)
-			if err != nil {
-				return err
-			}
-		}
-
-		return create(args)
-	},
-}
-
-func create(dirs []string) error {
+func startGenerator(dirs []string) error {
 	for _, dir := range dirs {
 		fullPackage, err := determineFullPackage(dir)
 		if err != nil {
@@ -42,7 +25,8 @@ func create(dirs []string) error {
 		// Do not alias the root package
 		delete(typesMap, fullPackage)
 
-		writeAliasFile(dir, typesMap)
+		bz := generateAliasFile(dir, typesMap)
+		ioutil.WriteFile(filepath.Join(dir, "alias.go"), bz, os.ModePerm)
 	}
 
 	return nil

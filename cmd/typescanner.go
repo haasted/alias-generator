@@ -10,9 +10,7 @@ import (
 	"strings"
 )
 
-const (
-	NoAliasEsc = "noalias"
-)
+const NoAliasEsc = "noalias"
 
 func scanSubdirectories(physDir, absolutePackage string, types map[string]packageDeclarations) error {
 	files, err := ioutil.ReadDir(physDir)

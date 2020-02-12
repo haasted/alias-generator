@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func writeAliasFile(physicaldir string, typemap map[string]packageDeclarations) {
+func generateAliasFile(physicaldir string, typemap map[string]packageDeclarations) []byte {
 	// Clear out package paths that do not have any content to alias.
 	for k, v := range typemap {
 		if len(v.types) == 0 && len(v.functions) == 0 && len(v.consts) == 0 && len(v.variables) == 0 {
@@ -82,5 +82,5 @@ func writeAliasFile(physicaldir string, typemap map[string]packageDeclarations) 
 		panic(err)
 	}
 
-	fmt.Println(string(fmtsrc))
+	return fmtsrc
 }
