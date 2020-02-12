@@ -20,13 +20,11 @@ func scanSubdirectories(physDir, absolutePackage string, types map[string]packag
 	declarations := packageDeclarations{}
 	expr, err := parser.ParseDir(token.NewFileSet(), physDir, filterGoFiles, parser.ParseComments)
 
-stopscan:
 	for _, e := range expr {
 		for _, f := range e.Files {
 			// The entire package can be noaliased by annotating the package declaration
 			if markedExempt(f.Doc) {
-				declarations = packageDeclarations{}
-				break stopscan
+				continue
 			}
 
 			for _, d := range f.Decls {
@@ -96,25 +94,15 @@ stopscan:
 	return nil
 }
 
-func parseAliasGenAnnotations(dir string) (aliaspackages []string, err error) {
+func parseImports(dir string) (aliaspackages []string, err error) {
 	aliasfile := filepath.Join(dir, "alias.go")
 	file, err := parser.ParseFile(token.NewFileSet(), aliasfile, nil, parser.ParseComments)
 	if err != nil {
 		return
 	}
 
-	if file.Comments == nil {
-		return
-	}
-
-	for _, c := range file.Comments {
-		for _, l := range c.List {
-			// Find any comment lines that annotate the packages that should be aliased.
-			if strings.Index(l.Text, AliasKeyword) != -1 {
-				p := strings.Split(l.Text, AliasKeyword)[1]
-				aliaspackages = append(aliaspackages, strings.TrimSpace(p))
-			}
-		}
+	for _, i := range file.Imports {
+		aliaspackages = append(aliaspackages, strings.Trim(i.Path.Value, "\""))
 	}
 
 	return

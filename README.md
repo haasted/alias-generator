@@ -17,8 +17,8 @@ The `create` command is used to create a new `alias.go` file in one or more pack
 The `update` command will recursively search for existing `alias.go` files and update them. 
 
 There are two ways to prevent an entire package from being aliased:
- - Annotate the package with a `// noalias` comment
- - Remove the package from the list of `ALIASGEN` comments in a generated `alias.go` file and update the file
+ - Annotate the package with a `// noalias` comment at the top of every file
+ - Remove the package from the import list in the `alias.go` file and update the file
 
 **Examples**
 
@@ -26,12 +26,6 @@ create a new `alias.go` file for the `inflation` module. Will overwrite an exist
    
 `alias-generator create ./x/inflation`
 
-Update all `alias.go` files in a project. 
+Update all `alias.go` files in a project. Searches recursively below current directory for files to update.
 
 `alias-generator update .`
-
-
-
-## Future work
-
- - Stop using the `ALIASGEN` annotation. Update alias files by looking at which import statements they contain.

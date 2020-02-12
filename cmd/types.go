@@ -7,7 +7,4 @@ type packageDeclarations struct {
 	types     []string
 }
 
-const (
-	NoAliasEsc   = "noalias"
-	AliasKeyword = "ALIASGEN:"
-)
+const NoAliasEsc = "noalias"

@@ -26,7 +26,7 @@ func startGenerator(dirs []string, update bool) error {
 		delete(typesMap, fullPackage)
 
 		if update {
-			aliaspackages, err := parseAliasGenAnnotations(dir)
+			aliaspackages, err := parseImports(dir)
 			if err != nil {
 				return err
 			}
